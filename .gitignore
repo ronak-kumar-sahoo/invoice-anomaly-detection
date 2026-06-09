@@ -32,3 +32,22 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Tesseract and Poppler (system installs, not project files)
+*.exe
+
+# Test invoice files
+test_invoice.pdf
+test_invoice.png
+test_invoice.jpg
+
+# Reportlab and other generated files
+*.pdf
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
