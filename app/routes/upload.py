@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, Depends
 from sqlalchemy.orm import Session
-from app.models.ml_model import load_model, predict_anomaly
-from app.models.rule_engine import apply_rules
+from app.models.invoice_ml_model import load_model, predict_anomaly
+from app.models.invoice_rule_engine import apply_rules
 from app.database.db import get_db
 from app.database.crud import save_invoice_result
 from app.schemas.invoice import UploadResponse

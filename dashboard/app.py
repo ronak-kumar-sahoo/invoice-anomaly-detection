@@ -16,12 +16,27 @@ st.title("🔍 Invoice & Payment Anomaly Detection System")
 st.markdown("---")
 
 # Sidebar
-page = st.sidebar.selectbox("Go to", [
+st.sidebar.title("Invoice Analysis")
+invoice_page = st.sidebar.radio("Invoice Module", [
     "Single Invoice Check",
     "Document Upload (PDF/Image)",
     "Bulk CSV Upload",
     "History & Analytics"
-])
+], key="invoice_nav")
+
+st.sidebar.markdown("---")
+st.sidebar.title("Payment Analysis")
+payment_page = st.sidebar.radio("Payment Module", [
+    "None",
+    "Single Payment Check",
+    "Payment Document Upload",
+    "Bulk Payment CSV Upload"
+], key="payment_nav")
+
+if payment_page != "None":
+    page = payment_page
+else:
+    page = invoice_page
 
 # ─── Page 1: Single Invoice Check ───
 if page == "Single Invoice Check":
@@ -188,6 +203,188 @@ elif page == "Bulk CSV Upload":
                 st.subheader("Detailed Results")
                 st.dataframe(
                     df[["invoice_id", "vendor_id", "amount",
+                        "final_risk_score", "risk_level", "is_anomaly"]],
+                    use_container_width=True
+                )
+
+            except Exception as e:
+                st.error(f"API Error: {e}")
+                
+# ─── Payment Page 1: Single Payment Check ───
+elif page == "Single Payment Check":
+    st.header("Single Payment Check")
+    st.markdown("Enter payment details to check for anomalies.")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        payment_id = st.text_input("Payment ID", value="PAY-00001")
+        vendor_id = st.text_input("Vendor ID", value="VENDOR_012")
+        invoice_amount = st.number_input("Invoice Amount (₹)", min_value=0.0, value=15420.50)
+        paid_amount = st.number_input("Paid Amount (₹)", min_value=0.0, value=15420.50)
+
+    with col2:
+        payment_method = st.selectbox("Payment Method", ["UPI", "NEFT", "RTGS", "Cheque", "Cash"])
+        previous_method = st.selectbox("Previous Payment Method", ["UPI", "NEFT", "RTGS", "Cheque", "Cash"])
+        transaction_hour = st.slider("Transaction Hour (24h)", 0, 23, 14)
+        payment_frequency = st.number_input("Payment Frequency (per month)", min_value=1, value=2)
+
+    is_partial = st.checkbox("Is Partial Payment")
+
+    if st.button("Analyze Payment", type="primary"):
+        payload = {
+            "payment_id": payment_id,
+            "vendor_id": vendor_id,
+            "invoice_amount": invoice_amount,
+            "paid_amount": paid_amount,
+            "payment_method": payment_method,
+            "previous_method": previous_method,
+            "transaction_hour": int(transaction_hour),
+            "payment_frequency": int(payment_frequency),
+            "is_partial_payment": is_partial
+        }
+
+        with st.spinner("Analyzing payment..."):
+            try:
+                response = requests.post(f"{API_URL}/payment/predict", json=payload)
+                result = response.json()
+
+                st.markdown("---")
+                st.subheader("Analysis Result")
+
+                col1, col2, col3, col4 = st.columns(4)
+                col1.metric("ML Risk Score", f"{result['ml_risk_score']:.1f}")
+                col2.metric("Rule Risk Score", f"{result['rule_risk_score']:.1f}")
+                col3.metric("Final Risk Score", f"{result['final_risk_score']:.1f}")
+
+                risk = result["risk_level"]
+                if risk == "HIGH":
+                    col4.error(f"Risk Level: {risk}")
+                elif risk == "MEDIUM":
+                    col4.warning(f"Risk Level: {risk}")
+                else:
+                    col4.success(f"Risk Level: {risk}")
+
+                if result["flags"]:
+                    st.subheader("Anomaly Flags")
+                    for flag in result["flags"]:
+                        st.warning(f"⚠️ {flag.replace('_', ' ').title()}")
+                else:
+                    st.success("✅ No rule-based flags detected")
+
+            except Exception as e:
+                st.error(f"API Error: {e}")
+
+# ─── Payment Page 2: Payment Document Upload ───
+elif page == "Payment Document Upload":
+    st.header("Payment Document Upload")
+    st.markdown("Upload a payment receipt, UPI screenshot, bank transfer receipt, or cheque image.")
+
+    st.info("Supported: UPI/NEFT/RTGS receipts, bank statements, cheque images (PDF, JPG, PNG)")
+
+    uploaded_file = st.file_uploader(
+        "Choose a payment document",
+        type=["pdf", "jpg", "jpeg", "png"],
+        key="payment_doc"
+    )
+
+    if uploaded_file and st.button("Analyze Payment Document", type="primary"):
+        with st.spinner("Extracting and analyzing payment document..."):
+            try:
+                files = {"file": (uploaded_file.name, uploaded_file, uploaded_file.type)}
+                response = requests.post(f"{API_URL}/payment/document", files=files)
+                result = response.json()
+
+                if "error" in result:
+                    st.error(f"Error: {result['error']}")
+                else:
+                    confidence = result.get("confidence_score", 0)
+                    st.markdown("---")
+                    st.subheader("Extraction Confidence")
+                    st.progress(confidence / 100)
+                    st.write(f"Confidence: {confidence}%")
+
+                    if confidence < 70:
+                        st.warning("⚠️ Low confidence extraction. Please verify the fields below.")
+
+                    parsed = result.get("parsed_fields", {})
+                    st.subheader("Extracted Fields")
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.info(f"Payment ID: {parsed.get('payment_id', 'N/A')}")
+                        st.info(f"Vendor: {parsed.get('vendor_id', 'N/A')}")
+                        st.info(f"Amount: ₹{parsed.get('paid_amount', 0)}")
+                    with col2:
+                        st.info(f"Method: {parsed.get('payment_method', 'N/A')}")
+                        st.info(f"Transaction Hour: {parsed.get('transaction_hour', 0)}:00")
+
+                    st.markdown("---")
+                    st.subheader("Analysis Result")
+                    col1, col2, col3, col4 = st.columns(4)
+                    col1.metric("ML Risk Score", f"{result['ml_risk_score']:.1f}")
+                    col2.metric("Rule Risk Score", f"{result['rule_risk_score']:.1f}")
+                    col3.metric("Final Risk Score", f"{result['final_risk_score']:.1f}")
+
+                    risk = result["risk_level"]
+                    if risk == "HIGH":
+                        col4.error(f"Risk Level: {risk}")
+                    elif risk == "MEDIUM":
+                        col4.warning(f"Risk Level: {risk}")
+                    else:
+                        col4.success(f"Risk Level: {risk}")
+
+                    if result["flags"]:
+                        st.subheader("Anomaly Flags")
+                        for flag in result["flags"]:
+                            st.warning(f"⚠️ {flag.replace('_', ' ').title()}")
+                    else:
+                        st.success("✅ No rule-based flags detected")
+
+                    with st.expander("See Extracted Text"):
+                        st.text(result.get("extracted_text", ""))
+
+            except Exception as e:
+                st.error(f"Error: {e}")
+
+# ─── Payment Page 3: Bulk Payment CSV Upload ───
+elif page == "Bulk Payment CSV Upload":
+    st.header("Bulk Payment CSV Upload")
+    st.markdown("Upload a CSV file with payment records to analyze in bulk.")
+
+    st.info("CSV must have columns: payment_id, vendor_id, invoice_amount, paid_amount, payment_method, previous_method, transaction_hour, payment_frequency, is_partial_payment")
+
+    uploaded_file = st.file_uploader("Choose a CSV file", type="csv", key="payment_csv")
+
+    if uploaded_file and st.button("Analyze Payment CSV", type="primary"):
+        with st.spinner("Analyzing all payments..."):
+            try:
+                files = {"file": (uploaded_file.name, uploaded_file, "text/csv")}
+                response = requests.post(f"{API_URL}/payment/upload", files=files)
+                result = response.json()
+
+                st.markdown("---")
+                col1, col2, col3 = st.columns(3)
+                col1.metric("Total Records", result["total_records"])
+                col2.metric("Anomalies Found", result["anomalies_found"])
+                col3.metric("Anomaly %", f"{result['anomaly_percentage']}%")
+
+                df = pd.DataFrame(result["results"])
+
+                st.subheader("Risk Level Distribution")
+                risk_counts = df["risk_level"].value_counts().reset_index()
+                risk_counts.columns = ["Risk Level", "Count"]
+                fig = px.bar(risk_counts, x="Risk Level", y="Count",
+                             color="Risk Level",
+                             color_discrete_map={
+                                 "HIGH": "red",
+                                 "MEDIUM": "orange",
+                                 "LOW": "green"
+                             })
+                st.plotly_chart(fig, use_container_width=True)
+
+                st.subheader("Detailed Results")
+                st.dataframe(
+                    df[["payment_id", "vendor_id", "paid_amount",
                         "final_risk_score", "risk_level", "is_anomaly"]],
                     use_container_width=True
                 )
