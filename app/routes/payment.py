@@ -4,9 +4,15 @@ from app.schemas.payment import PaymentInput, PaymentResponse, PaymentUploadResp
 from app.models.payment_ml_model import load_payment_model, predict_payment_anomaly
 from app.models.payment_rule_engine import apply_payment_rules
 from app.database.db import get_db
+from app.database.crud import (
+    save_payment_result,
+    get_all_payment_records,
+    get_payment_anomalies_only,
+    get_payment_stats
+)
+import json
 import pandas as pd
 import io
-import json
 
 router = APIRouter()
 
@@ -46,6 +52,7 @@ def predict_payment(payment: PaymentInput, db: Session = Depends(get_db)):
         "message": f"Payment analyzed. Risk level: {final['risk_level']}"
     }
 
+    save_payment_result(db, payment_dict, result)
     return result
 
 @router.post("/payment/upload", response_model=PaymentUploadResponse)
@@ -105,6 +112,7 @@ async def upload_payment_csv(
         if ml_result["is_anomaly"]:
             anomaly_count += 1
 
+        save_payment_result(db, payment_dict, result)
         results.append(result)
 
     return {
@@ -115,9 +123,47 @@ async def upload_payment_csv(
     }
 
 @router.get("/payment/history")
-def get_payment_history():
-    return {"message": "Payment history endpoint ready"}
+def payment_history(db: Session = Depends(get_db)):
+    records = get_all_payment_records(db)
+    return [
+        {
+            "payment_id": r.payment_id,
+            "vendor_id": r.vendor_id,
+            "invoice_amount": r.invoice_amount,
+            "paid_amount": r.paid_amount,
+            "payment_method": r.payment_method,
+            "transaction_hour": r.transaction_hour,
+            "is_anomaly": r.is_anomaly,
+            "ml_risk_score": r.ml_risk_score,
+            "rule_risk_score": r.rule_risk_score,
+            "final_risk_score": r.final_risk_score,
+            "risk_level": r.risk_level,
+            "flags": json.loads(r.flags) if r.flags else [],
+            "created_at": str(r.created_at)
+        }
+        for r in records
+    ]
+
+@router.get("/payment/history/anomalies")
+def payment_anomalies(db: Session = Depends(get_db)):
+    records = get_payment_anomalies_only(db)
+    return [
+        {
+            "payment_id": r.payment_id,
+            "vendor_id": r.vendor_id,
+            "invoice_amount": r.invoice_amount,
+            "paid_amount": r.paid_amount,
+            "payment_method": r.payment_method,
+            "transaction_hour": r.transaction_hour,
+            "is_anomaly": r.is_anomaly,
+            "final_risk_score": r.final_risk_score,
+            "risk_level": r.risk_level,
+            "flags": json.loads(r.flags) if r.flags else [],
+            "created_at": str(r.created_at)
+        }
+        for r in records
+    ]
 
 @router.get("/payment/stats")
-def get_payment_stats():
-    return {"message": "Payment stats endpoint ready"}
+def payment_stats(db: Session = Depends(get_db)):
+    return get_payment_stats(db)

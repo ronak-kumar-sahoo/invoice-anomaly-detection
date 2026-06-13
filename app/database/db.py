@@ -32,6 +32,27 @@ class InvoiceRecord(Base):
     flags = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+class PaymentRecord(Base):
+    __tablename__ = "payment_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    payment_id = Column(String, index=True)
+    vendor_id = Column(String)
+    invoice_amount = Column(Float)
+    paid_amount = Column(Float)
+    payment_method = Column(String)
+    previous_method = Column(String)
+    transaction_hour = Column(Integer)
+    payment_frequency = Column(Integer)
+    is_partial_payment = Column(Boolean)
+    is_anomaly = Column(Boolean)
+    ml_risk_score = Column(Float)
+    rule_risk_score = Column(Float)
+    final_risk_score = Column(Float)
+    risk_level = Column(String)
+    flags = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
 def create_tables():
     Base.metadata.create_all(bind=engine)
 

@@ -30,7 +30,8 @@ payment_page = st.sidebar.radio("Payment Module", [
     "None",
     "Single Payment Check",
     "Payment Document Upload",
-    "Bulk Payment CSV Upload"
+    "Bulk Payment CSV Upload",
+    "Payment History & Analytics"
 ], key="payment_nav")
 
 if payment_page != "None":
@@ -436,6 +437,55 @@ elif page == "History & Analytics":
 
         else:
             st.info("No records yet. Analyze some invoices first.")
+
+    except Exception as e:
+        st.error(f"API Error: {e}")
+
+# ─── Payment Page 4: Payment History & Analytics ───
+elif page == "Payment History & Analytics":
+    st.header("Payment History & Analytics")
+
+    try:
+        stats = requests.get(f"{API_URL}/payment/stats").json()
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Total Payments", stats["total_records"])
+        col2.metric("Total Anomalies", stats["total_anomalies"])
+        col3.metric("Anomaly Rate", f"{stats['anomaly_percentage']}%")
+
+        st.markdown("---")
+
+        history = requests.get(f"{API_URL}/payment/history").json()
+
+        if history:
+            df = pd.DataFrame(history)
+
+            st.subheader("Risk Score Distribution")
+            fig = px.histogram(df, x="final_risk_score",
+                               color="risk_level",
+                               color_discrete_map={
+                                   "HIGH": "red",
+                                   "MEDIUM": "orange",
+                                   "LOW": "green"
+                               })
+            st.plotly_chart(fig, use_container_width=True)
+
+            st.subheader("Payment Method Distribution")
+            method_counts = df["payment_method"].value_counts().reset_index()
+            method_counts.columns = ["Payment Method", "Count"]
+            fig2 = px.bar(method_counts, x="Payment Method", y="Count")
+            st.plotly_chart(fig2, use_container_width=True)
+
+            st.subheader("Top Vendors by Risk Score")
+            vendor_risk = df.groupby("vendor_id")["final_risk_score"].mean().reset_index()
+            vendor_risk = vendor_risk.sort_values("final_risk_score", ascending=False).head(10)
+            fig3 = px.bar(vendor_risk, x="vendor_id", y="final_risk_score")
+            st.plotly_chart(fig3, use_container_width=True)
+
+            st.subheader("All Payment Records")
+            st.dataframe(df, use_container_width=True)
+
+        else:
+            st.info("No payment records yet. Analyze some payments first.")
 
     except Exception as e:
         st.error(f"API Error: {e}")

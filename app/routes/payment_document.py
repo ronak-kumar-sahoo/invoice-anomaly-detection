@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.models.payment_ml_model import load_payment_model, predict_payment_anomaly
 from app.models.payment_rule_engine import apply_payment_rules
 from app.database.db import get_db
+from app.database.crud import save_payment_result
 import pytesseract
 from pdf2image import convert_from_bytes
 from PIL import Image
@@ -192,7 +193,14 @@ async def predict_payment_from_document(
             ml_result["ml_risk_score"],
             rule_result["rule_risk_score"]
         )
-
+        save_payment_result(db, payment_dict, {
+                    "is_anomaly": ml_result["is_anomaly"],
+                    "ml_risk_score": ml_result["ml_risk_score"],
+                    "rule_risk_score": rule_result["rule_risk_score"],
+                    "final_risk_score": final["final_risk_score"],
+                    "risk_level": final["risk_level"],
+                    "flags": rule_result["flags"]
+                })
         return {
             "payment_id": payment_dict["payment_id"],
             "vendor_id": payment_dict["vendor_id"],
