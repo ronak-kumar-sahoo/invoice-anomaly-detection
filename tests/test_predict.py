@@ -74,6 +74,57 @@ def test_history():
     assert isinstance(response.json(), list)
     print(f"✅ History test passed → {len(response.json())} records found")
 
+def test_payment_predict_normal():
+    payload = {
+        "payment_id": "PAY-TEST-001",
+        "vendor_id": "VENDOR_012",
+        "invoice_amount": 15420.50,
+        "paid_amount": 15420.50,
+        "payment_method": "NEFT",
+        "previous_method": "NEFT",
+        "transaction_hour": 14,
+        "payment_frequency": 2,
+        "is_partial_payment": False
+    }
+    response = requests.post(f"{BASE_URL}/payment/predict", json=payload)
+    assert response.status_code == 200
+    result = response.json()
+    assert "risk_level" in result
+    assert result["risk_level"] in ["LOW", "MEDIUM", "HIGH"]
+    print(f"✅ Normal payment test passed → Risk: {result['risk_level']}")
+
+def test_payment_predict_high_risk():
+    payload = {
+        "payment_id": "PAY-TEST-002",
+        "vendor_id": "VENDOR_001",
+        "invoice_amount": 50000.00,
+        "paid_amount": 25000.00,
+        "payment_method": "Cash",
+        "previous_method": "NEFT",
+        "transaction_hour": 2,
+        "payment_frequency": 12,
+        "is_partial_payment": True
+    }
+    response = requests.post(f"{BASE_URL}/payment/predict", json=payload)
+    assert response.status_code == 200
+    result = response.json()
+    assert result["risk_level"] == "HIGH"
+    print(f"✅ High risk payment test passed → Risk: {result['risk_level']}")
+
+def test_payment_stats():
+    response = requests.get(f"{BASE_URL}/payment/stats")
+    assert response.status_code == 200
+    result = response.json()
+    assert "total_records" in result
+    assert "total_anomalies" in result
+    print(f"✅ Payment stats test passed → Total records: {result['total_records']}")
+
+def test_payment_history():
+    response = requests.get(f"{BASE_URL}/payment/history")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+    print(f"✅ Payment history test passed → {len(response.json())} records found")
+
 if __name__ == "__main__":
     print("=" * 50)
     print("RUNNING API TESTS")
@@ -89,6 +140,10 @@ if __name__ == "__main__":
         test_predict_missing_field()
         test_stats()
         test_history()
+        test_payment_predict_normal()
+        test_payment_predict_high_risk()
+        test_payment_stats()
+        test_payment_history()
 
         print("\n" + "=" * 50)
         print("✅ ALL TESTS PASSED")
