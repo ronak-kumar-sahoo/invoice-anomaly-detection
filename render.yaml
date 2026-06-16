@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: invoice-anomaly-detection
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      python ml/invoice_generator.py
+      python ml/invoice_train.py
+      python ml/payment_generator.py
+      python ml/payment_train.py
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
