@@ -18,9 +18,10 @@ model, scaler, le = load_payment_model()
 import os
 import platform
 
-if platform.system() == "Windows":
+# Detect OS and set Tesseract path
+if os.name == 'nt':  # Windows
     pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-else:
+else:  # Linux/Mac (Render)
     pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
     
 def extract_text_from_image(image):
