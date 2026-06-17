@@ -278,3 +278,8 @@ Supported formats: PDF, JPG, JPEG, PNG
 
 **Ronak**
 - [text](https://github.com/ronak-kumar-sahoo)
+
+## Live Demo
+
+- **Swagger UI:** https://invoice-anomaly-detection.onrender.com/docs
+- **Streamlit Dashboard:** https://invoice-anomaly-detection-4ryyjggxbjzllukcrtxjvx.streamlit.app/
