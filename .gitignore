@@ -8,8 +8,7 @@ __pycache__/
 *.pyd
 
 # ML model files (too large for GitHub)
-/models/
-*.pkl
+
 *.h5
 
 # Database (local only)
