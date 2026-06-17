@@ -43,17 +43,17 @@ def predict(invoice: InvoiceInput, db: Session = Depends(get_db)):
     )
 
     result = {
-        "invoice_id": invoice_dict["invoice_id"],
-        "vendor_id": invoice_dict["vendor_id"],
-        "amount": invoice_dict["amount"],
-        "is_anomaly": ml_result["is_anomaly"],
-        "ml_risk_score": ml_result["ml_risk_score"],
-        "rule_risk_score": rule_result["rule_risk_score"],
-        "final_risk_score": final["final_risk_score"],
-        "risk_level": final["risk_level"],
-        "flags": rule_result["flags"],
-        "message": f"Invoice analyzed. Risk level: {final['risk_level']}"
-    }
+    "invoice_id": str(invoice_dict["invoice_id"]),
+    "vendor_id": str(invoice_dict["vendor_id"]),
+    "amount": float(invoice_dict["amount"]),
+    "is_anomaly": bool(ml_result["is_anomaly"]),
+    "ml_risk_score": float(ml_result["ml_risk_score"]),
+    "rule_risk_score": float(rule_result["rule_risk_score"]),
+    "final_risk_score": float(final["final_risk_score"]),
+    "risk_level": str(final["risk_level"]),
+    "flags": list(rule_result["flags"]),
+    "message": f"Invoice analyzed. Risk level: {str(final['risk_level'])}"
+}
 
     # Save to database
     save_invoice_result(db, invoice_dict, result)

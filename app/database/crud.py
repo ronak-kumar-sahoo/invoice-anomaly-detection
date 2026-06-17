@@ -4,20 +4,20 @@ import json
 
 def save_invoice_result(db: Session, invoice_data: dict, result: dict):
     record = InvoiceRecord(
-        invoice_id=invoice_data.get("invoice_id"),
-        vendor_id=invoice_data.get("vendor_id"),
-        category=invoice_data.get("category"),
-        amount=invoice_data.get("amount"),
-        quantity=invoice_data.get("quantity"),
-        unit_price=invoice_data.get("unit_price"),
-        payment_delay=invoice_data.get("payment_delay"),
-        is_anomaly=result.get("is_anomaly"),
-        ml_risk_score=result.get("ml_risk_score"),
-        rule_risk_score=result.get("rule_risk_score"),
-        final_risk_score=result.get("final_risk_score"),
-        risk_level=result.get("risk_level"),
-        flags=json.dumps(result.get("flags", []))
-    )
+    invoice_id=str(invoice_data.get("invoice_id")),
+    vendor_id=str(invoice_data.get("vendor_id")),
+    category=str(invoice_data.get("category")),
+    amount=float(invoice_data.get("amount")),
+    quantity=int(invoice_data.get("quantity")),
+    unit_price=float(invoice_data.get("unit_price")),
+    payment_delay=int(invoice_data.get("payment_delay")),
+    is_anomaly=bool(result.get("is_anomaly")),
+    ml_risk_score=float(result.get("ml_risk_score")),
+    rule_risk_score=float(result.get("rule_risk_score")),
+    final_risk_score=float(result.get("final_risk_score")),
+    risk_level=str(result.get("risk_level")),
+    flags=json.dumps(result.get("flags", []))
+)
     db.add(record)
     db.commit()
     db.refresh(record)
@@ -54,22 +54,22 @@ from app.database.db import PaymentRecord
 
 def save_payment_result(db: Session, payment_data: dict, result: dict):
     record = PaymentRecord(
-        payment_id=payment_data.get("payment_id"),
-        vendor_id=payment_data.get("vendor_id"),
-        invoice_amount=payment_data.get("invoice_amount"),
-        paid_amount=payment_data.get("paid_amount"),
-        payment_method=payment_data.get("payment_method"),
-        previous_method=payment_data.get("previous_method"),
-        transaction_hour=payment_data.get("transaction_hour"),
-        payment_frequency=payment_data.get("payment_frequency"),
-        is_partial_payment=payment_data.get("is_partial_payment"),
-        is_anomaly=result.get("is_anomaly"),
-        ml_risk_score=result.get("ml_risk_score"),
-        rule_risk_score=result.get("rule_risk_score"),
-        final_risk_score=result.get("final_risk_score"),
-        risk_level=result.get("risk_level"),
-        flags=json.dumps(result.get("flags", []))
-    )
+    payment_id=str(payment_data.get("payment_id")),
+    vendor_id=str(payment_data.get("vendor_id")),
+    invoice_amount=float(payment_data.get("invoice_amount")),
+    paid_amount=float(payment_data.get("paid_amount")),
+    payment_method=str(payment_data.get("payment_method")),
+    previous_method=str(payment_data.get("previous_method")),
+    transaction_hour=int(payment_data.get("transaction_hour")),
+    payment_frequency=int(payment_data.get("payment_frequency")),
+    is_partial_payment=bool(payment_data.get("is_partial_payment")),
+    is_anomaly=bool(result.get("is_anomaly")),
+    ml_risk_score=float(result.get("ml_risk_score")),
+    rule_risk_score=float(result.get("rule_risk_score")),
+    final_risk_score=float(result.get("final_risk_score")),
+    risk_level=str(result.get("risk_level")),
+    flags=json.dumps(result.get("flags", []))
+)
     db.add(record)
     db.commit()
     db.refresh(record)
