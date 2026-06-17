@@ -16,8 +16,13 @@ router = APIRouter()
 model, scaler = load_model()
 
 # Tesseract path
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+import os
+import platform
 
+if platform.system() == "Windows":
+    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+else:
+    pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 def extract_text_from_image(image):
     text = pytesseract.image_to_string(image)
     return text

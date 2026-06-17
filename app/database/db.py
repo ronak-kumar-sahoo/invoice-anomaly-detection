@@ -2,12 +2,22 @@ from sqlalchemy import create_engine, Column, String, Float, Boolean, Integer, D
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
+import os
 
-DATABASE_URL = "sqlite:///./invoice_anomaly.db"
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./invoice_anomaly.db")
 
-engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
-)
+# Fix for PostgreSQL URL format from Render
+# Render gives "postgres://" but SQLAlchemy needs "postgresql://"
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# SQLite needs extra argument, PostgreSQL does not
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(
+        DATABASE_URL, connect_args={"check_same_thread": False}
+    )
+else:
+    engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -52,7 +62,7 @@ class PaymentRecord(Base):
     risk_level = Column(String)
     flags = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
 def create_tables():
     Base.metadata.create_all(bind=engine)
 
