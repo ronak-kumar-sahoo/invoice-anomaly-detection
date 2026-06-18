@@ -10,6 +10,12 @@ API_URL = os.getenv(
     "https://invoice-anomaly-detection-1.onrender.com"
 )
 
+# Warm up API on page load
+try:
+    requests.get(f"{API_URL}/health", timeout=60)
+except:
+    pass
+
 st.set_page_config(
     page_title="Invoice Anomaly Detection",
     page_icon="🔍",
