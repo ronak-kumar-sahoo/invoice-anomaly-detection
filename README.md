@@ -281,5 +281,5 @@ Supported formats: PDF, JPG, JPEG, PNG
 
 ## Live Demo
 
-- **Swagger UI:** https://invoice-anomaly-detection.onrender.com/docs
+- **Swagger UI:** https://invoice-anomaly-detection-1.onrender.com/docs
 - **Streamlit Dashboard:** https://invoice-anomaly-detection-4ryyjggxbjzllukcrtxjvx.streamlit.app/

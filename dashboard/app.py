@@ -7,7 +7,7 @@ import os
 
 API_URL = os.getenv(
     "API_URL",
-    "https://invoice-anomaly-detection-docker.onrender.com"
+    "https://invoice-anomaly-detection-1.onrender.com/"
 )
 
 st.set_page_config(
