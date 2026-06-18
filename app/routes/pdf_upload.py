@@ -17,14 +17,22 @@ model, scaler = load_model()
 
 # Tesseract path
 import os
-import platform
+import shutil
+import pytesseract
 
 # Detect OS and set Tesseract path
-if os.name == 'nt':  # Windows
-    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-else:  # Linux/Mac (Render)
-    pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
+if os.name == "nt":  # Windows
+    pytesseract.pytesseract.tesseract_cmd = (
+        r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+    )
+else:  # Linux / Render
+    tesseract_path = shutil.which("tesseract")
 
+    if tesseract_path:
+        pytesseract.pytesseract.tesseract_cmd = tesseract_path
+    else:
+        raise RuntimeError("Tesseract executable not found in PATH")
+    
 def extract_text_from_image(image):
     text = pytesseract.image_to_string(image)
     return text
