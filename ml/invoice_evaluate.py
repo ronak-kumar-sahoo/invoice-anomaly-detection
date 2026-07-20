@@ -19,7 +19,17 @@ def load_artifacts():
     return model, scaler
 
 def load_data():
-    df = pd.read_csv("data/raw/invoices.csv")
+    # Evaluate on the held-out test set saved by invoice_train.py --
+    # NOT the raw training file. Scoring on data/raw/invoices.csv here
+    # would silently re-introduce the train/test contamination we fixed
+    # (the model would be evaluated on rows it was already trained on).
+    test_path = "data/processed/invoice_test.csv"
+    if not os.path.exists(test_path):
+        raise FileNotFoundError(
+            f"{test_path} not found. Run `python ml/invoice_train.py` first "
+            "to generate the held-out test set before evaluating."
+        )
+    df = pd.read_csv(test_path)
     features = ["amount", "quantity", "unit_price", "payment_delay"]
     X = df[features].copy()
     y = df["is_anomaly"]

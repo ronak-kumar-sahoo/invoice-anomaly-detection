@@ -54,7 +54,7 @@ async def upload_csv(file: UploadFile = File(...), db: Session = Depends(get_db)
         }
 
         ml_result = predict_anomaly(invoice_dict, model, scaler)
-        rule_result = apply_rules(invoice_dict)
+        rule_result = apply_rules(invoice_dict, db)
         final = calculate_final_score(
             ml_result["ml_risk_score"],
             rule_result["rule_risk_score"]

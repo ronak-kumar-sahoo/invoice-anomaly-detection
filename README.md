@@ -80,7 +80,8 @@ invoice-anomaly-detection/
 │   ├── invoice_train.py
 │   ├── invoice_evaluate.py
 │   ├── payment_generator.py
-│   └── payment_train.py
+│   ├── payment_train.py
+│   └── payment_evaluate.py
 ├── dashboard/
 │   └── app.py
 ├── tests/
@@ -97,7 +98,7 @@ invoice-anomaly-detection/
 
 | Type | Description |
 |---|---|
-| Duplicate Invoice | Same vendor, same amount, close dates |
+| Duplicate Invoice | Same vendor and same amount as a previously seen invoice (rule-based DB lookup, not caught by the ML model) |
 | Round Number Fraud | Suspiciously round amounts |
 | Payment Delay | Unusually late or early payments |
 | Amount Spike | Vendor invoicing abnormally large amounts |
@@ -115,6 +116,7 @@ invoice-anomaly-detection/
 | Suspicious Method Change | Payment method changed involving Cash |
 | Large Cash Payment | Cash payment above ₹10,000 |
 | Invalid Payment Amount | Zero or negative paid amount |
+| Duplicate Payment | Same vendor and same paid amount as a previously seen payment (rule-based DB lookup) |
 
 ---
 
@@ -151,8 +153,43 @@ invoice-anomaly-detection/
 
 - Algorithm: Isolation Forest
 - Contamination rate: 8%
-- Evaluation metrics: Precision, Recall, F1, ROC AUC
-- Separate models trained for invoice and payment anomalies
+- Evaluated on a stratified 80/20 held-out test split (not the training data) to avoid inflated metrics
+
+### Invoice Model (held-out test set)
+
+| Metric | Score |
+|---|---|
+| Anomaly Precision | 0.62 |
+| Anomaly Recall | 0.56 |
+
+Detection rate by anomaly type:
+
+| Anomaly Type | Detected |
+|---|---|
+| Amount Spike | 100% |
+| Round Number Fraud | 27% |
+| Payment Delay | — |
+| Duplicate | 0% (structural — see note below) |
+
+### Payment Model (held-out test set)
+
+| Metric | Score |
+|---|---|
+| Anomaly Precision | 0.56 |
+| Anomaly Recall | 0.65 |
+| ROC AUC | 0.89 |
+
+Detection rate by anomaly type:
+
+| Anomaly Type | Detected |
+|---|---|
+| Partial Payment | 100% |
+| Late Night Transaction | 100% |
+| High Frequency Payment | 100% |
+| Overpayment | 55% |
+| Method Change | 14% |
+
+**Note on duplicates:** Isolation Forest scores individual invoices/payments on numeric features (amount, quantity, unit price, etc.) — a duplicate has *identical* values to a real record, so it isn't a numeric outlier and can't be caught by the ML layer at all. Duplicate detection is handled separately by the rule engine, which queries the database for a matching vendor + amount from prior records.
 
 ---
 
@@ -160,7 +197,7 @@ invoice-anomaly-detection/
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/ronakbhatt/invoice-anomaly-detection.git
+git clone https://github.com/ronak-kumar-sahoo/invoice-anomaly-detection.git
 cd invoice-anomaly-detection
 ```
 
@@ -187,6 +224,12 @@ python ml/invoice_generator.py
 python ml/invoice_train.py
 python ml/payment_generator.py
 python ml/payment_train.py
+```
+
+### 6a. (Optional) Evaluate models on held-out test set
+```bash
+python ml/invoice_evaluate.py
+python ml/payment_evaluate.py
 ```
 
 ### 7. Start the API
@@ -277,7 +320,7 @@ Supported formats: PDF, JPG, JPEG, PNG
 ## Author
 
 **Ronak**
-- [text](https://github.com/ronak-kumar-sahoo)
+- [GitHub](https://github.com/ronak-kumar-sahoo)
 
 ## Live Demo
 

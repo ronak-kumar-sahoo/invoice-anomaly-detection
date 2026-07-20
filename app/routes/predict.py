@@ -33,8 +33,8 @@ def predict(invoice: InvoiceInput, db: Session = Depends(get_db)):
     # ML prediction
     ml_result = predict_anomaly(invoice_dict, model, scaler)
 
-    # Rule based prediction
-    rule_result = apply_rules(invoice_dict)
+    # Rule based prediction (db lets Rule 6 check for duplicate invoices)
+    rule_result = apply_rules(invoice_dict, db)
 
     # Combine scores
     final = calculate_final_score(

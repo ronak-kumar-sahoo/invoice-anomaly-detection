@@ -16,7 +16,7 @@ import io
 
 router = APIRouter()
 
-model, scaler, le = load_payment_model()
+model, scaler, le_payment_method, le_previous_method = load_payment_model()
 
 def calculate_final_score(ml_score: float, rule_score: float) -> dict:
     final_score = round((ml_score * 0.6) + (rule_score * 0.4), 2)
@@ -32,7 +32,7 @@ def calculate_final_score(ml_score: float, rule_score: float) -> dict:
 def predict_payment(payment: PaymentInput, db: Session = Depends(get_db)):
     payment_dict = payment.dict()
 
-    ml_result = predict_payment_anomaly(payment_dict, model, scaler, le)
+    ml_result = predict_payment_anomaly(payment_dict, model, scaler, le_payment_method, le_previous_method)
     rule_result = apply_payment_rules(payment_dict)
     final = calculate_final_score(
         ml_result["ml_risk_score"],
@@ -89,7 +89,7 @@ async def upload_payment_csv(
             "is_partial_payment": bool(row["is_partial_payment"])
         }
 
-        ml_result = predict_payment_anomaly(payment_dict, model, scaler, le)
+        ml_result = predict_payment_anomaly(payment_dict, model, scaler, le_payment_method, le_previous_method)
         rule_result = apply_payment_rules(payment_dict)
         final = calculate_final_score(
             ml_result["ml_risk_score"],

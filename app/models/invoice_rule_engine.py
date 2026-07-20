@@ -1,4 +1,4 @@
-def apply_rules(invoice: dict) -> dict:
+def apply_rules(invoice: dict, db=None) -> dict:
     flags = []
     risk_score = 0
 
@@ -34,6 +34,23 @@ def apply_rules(invoice: dict) -> dict:
     if abs(expected_amount - amount) > 10:
         flags.append("quantity_amount_mismatch")
         risk_score += 35
+
+    # Rule 6 — Duplicate invoice
+    # Isolation Forest can't catch this: a duplicate has IDENTICAL
+    # amount/quantity/unit_price/payment_delay to a real invoice, so it
+    # isn't an outlier in feature space at all. This has to be an exact-
+    # match lookup against previously seen invoices instead.
+    if db is not None:
+        from app.database.db import InvoiceRecord
+        vendor_id = invoice.get("vendor_id")
+        existing = db.query(InvoiceRecord).filter(
+            InvoiceRecord.vendor_id == vendor_id,
+            InvoiceRecord.amount == amount,
+            InvoiceRecord.invoice_id != invoice.get("invoice_id")
+        ).first()
+        if existing is not None:
+            flags.append("possible_duplicate")
+            risk_score += 40
 
     return {
         "flags": flags,

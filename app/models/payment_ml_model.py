@@ -6,16 +6,20 @@ def load_payment_model():
         model = pickle.load(f)
     with open("models/payment_scaler.pkl", "rb") as f:
         scaler = pickle.load(f)
-    with open("models/payment_label_encoder.pkl", "rb") as f:
-        le = pickle.load(f)
-    return model, scaler, le
+    with open("models/payment_method_label_encoder.pkl", "rb") as f:
+        le_payment_method = pickle.load(f)
+    with open("models/previous_method_label_encoder.pkl", "rb") as f:
+        le_previous_method = pickle.load(f)
+    return model, scaler, le_payment_method, le_previous_method
 
-def predict_payment_anomaly(payment: dict, model, scaler, le) -> dict:
+def predict_payment_anomaly(payment: dict, model, scaler, le_payment_method, le_previous_method) -> dict:
     try:
-        payment_method_encoded = le.transform([payment.get("payment_method", "NEFT")])[0]
-        previous_method_encoded = le.transform([payment.get("previous_method", "NEFT")])[0]
-    except:
+        payment_method_encoded = le_payment_method.transform([payment.get("payment_method", "NEFT")])[0]
+    except Exception:
         payment_method_encoded = 0
+    try:
+        previous_method_encoded = le_previous_method.transform([payment.get("previous_method", "NEFT")])[0]
+    except Exception:
         previous_method_encoded = 0
 
     features = [

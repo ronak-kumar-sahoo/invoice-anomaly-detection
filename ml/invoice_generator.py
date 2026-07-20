@@ -60,6 +60,10 @@ def inject_anomalies(invoices):
     for _ in range(anomaly_count // 4):
         idx = random.randint(0, n - 1)
         invoices[idx]["amount"] = float(random.choice([5000, 10000, 25000, 50000, 100000]))
+        # Recompute unit_price so it stays consistent with amount/quantity --
+        # otherwise the mismatch itself (not the round amount) becomes a
+        # trivial giveaway feature for the model.
+        invoices[idx]["unit_price"] = round(invoices[idx]["amount"] / invoices[idx]["quantity"], 2)
         invoices[idx]["is_anomaly"] = 1
         invoices[idx]["anomaly_type"] = "round_number"
 
@@ -74,6 +78,7 @@ def inject_anomalies(invoices):
     for _ in range(anomaly_count // 4):
         idx = random.randint(0, n - 1)
         invoices[idx]["amount"] = round(random.uniform(500000, 1000000), 2)
+        invoices[idx]["unit_price"] = round(invoices[idx]["amount"] / invoices[idx]["quantity"], 2)
         invoices[idx]["is_anomaly"] = 1
         invoices[idx]["anomaly_type"] = "amount_spike"
 
