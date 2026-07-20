@@ -1,6 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, Depends
 from sqlalchemy.orm import Session
-from app.schemas.payment import PaymentInput, PaymentResponse, PaymentUploadResponse
 from app.models.payment_ml_model import load_payment_model, predict_payment_anomaly
 from app.models.payment_rule_engine import apply_payment_rules
 from app.database.db import get_db

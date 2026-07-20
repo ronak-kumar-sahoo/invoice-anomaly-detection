@@ -13,7 +13,7 @@ import uuid
 
 router = APIRouter()
 
-model, scaler, le = load_payment_model()
+model, scaler, le_payment_method, le_previous_method = load_payment_model()
 
 import os
 import shutil
@@ -202,8 +202,8 @@ async def predict_payment_from_document(
         confidence = calculate_confidence(payment_dict)
 
         # Run through ML + rules
-        ml_result = predict_payment_anomaly(payment_dict, model, scaler, le)
-        rule_result = apply_payment_rules(payment_dict)
+        ml_result = predict_payment_anomaly(payment_dict, model, scaler, le_payment_method, le_previous_method)
+        rule_result = apply_payment_rules(payment_dict, db)
         final = calculate_final_score(
             ml_result["ml_risk_score"],
             rule_result["rule_risk_score"]
