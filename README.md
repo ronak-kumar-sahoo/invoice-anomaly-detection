@@ -30,10 +30,11 @@ Both layers combine into a final risk score with three levels — LOW, MEDIUM, H
 - Real-time risk scoring
 
 ### General
-- Interactive dashboard with separate Invoice and Payment modules
-- SQLite database for storing results
+- Interactive Streamlit dashboard with separate Invoice and Payment modules
+- PostgreSQL database (via SQLAlchemy) for storing results; SQLite for local development
 - Swagger UI for API documentation and testing
 - Automated API tests
+- Dockerised backend, deployed on Render; dashboard deployed on Streamlit Community Cloud
 
 ---
 
@@ -308,13 +309,10 @@ Supported formats: PDF, JPG, JPEG, PNG
 
 ## Future Improvements
 
-- Switch to PostgreSQL for production
 - Add authentication and API keys
 - Train on real invoice and payment datasets
 - Add email alerts for HIGH risk transactions
-- Deploy on cloud (Render + Streamlit Cloud)
 - Real-time pre-payment fraud detection via payment gateway webhooks
-
 ---
 
 ## Author
